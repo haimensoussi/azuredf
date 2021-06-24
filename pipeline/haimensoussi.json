@@ -4,12 +4,12 @@
 		"description": "hhhgg",
 		"activities": [
 			{
-				"name": "Wait1",
+				"name": "Wait110",
 				"type": "Wait",
 				"dependsOn": [],
 				"userProperties": [],
 				"typeProperties": {
-					"waitTimeInSeconds": 1
+					"waitTimeInSeconds": 10
 				}
 			}
 		],

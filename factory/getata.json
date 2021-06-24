@@ -1,0 +1,9 @@
+{
+	"name": "getata",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "2c71d2a2-0609-42fb-b1a0-338807d16976",
+		"tenantId": "ab90aacf-96cf-4f98-8068-f298072e1746"
+	}
+}

@@ -1,0 +1,553 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Nom de fabrique de données",
+			"defaultValue": "getata"
+		},
+		"AzureBlobStorage1_connectionString": {
+			"type": "secureString",
+			"metadata": "Chaîne sécurisée pour « connectionString » de « AzureBlobStorage1 »"
+		},
+		"AzureTableStorage1_connectionString": {
+			"type": "secureString",
+			"metadata": "Chaîne sécurisée pour « connectionString » de « AzureTableStorage1 »"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/haimensoussi')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "hhhgg",
+				"activities": [
+					{
+						"name": "Wait1",
+						"type": "Wait",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"waitTimeInSeconds": 1
+						}
+					}
+				],
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"preventDataExfiltration": false
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				},
+				"managedVirtualNetwork": {
+					"type": "ManagedVirtualNetworkReference",
+					"referenceName": "default"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/managedVirtualNetworks/default')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureBlobStorage1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureBlobStorage1_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureTableStorage1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureTableStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureTableStorage1_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DelimitedText1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "logic"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DestinationDataset_l0f')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureTableStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureTable",
+				"schema": [],
+				"typeProperties": {
+					"tableName": "Table1"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureTableStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Excel1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Excel",
+				"typeProperties": {
+					"sheetName": "SalesSQL",
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "sql data.xlsx",
+						"container": "logic"
+					},
+					"firstRowAsHeader": true
+				},
+				"schema": [
+					{
+						"name": "Order ID",
+						"type": "String"
+					},
+					{
+						"name": "Product ID",
+						"type": "String"
+					},
+					{
+						"name": "Location ID",
+						"type": "String"
+					},
+					{
+						"name": "Sales Person ID",
+						"type": "String"
+					},
+					{
+						"name": "Customer ID",
+						"type": "String"
+					},
+					{
+						"name": "Purchase Date",
+						"type": "String"
+					},
+					{
+						"name": "Quantity",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SourceDataset_l0f')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Excel",
+				"typeProperties": {
+					"sheetName": "SalesSQL",
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "sql data.xlsx",
+						"container": "logic"
+					},
+					"firstRowAsHeader": true
+				},
+				"schema": [
+					{
+						"name": "Order ID",
+						"type": "String"
+					},
+					{
+						"name": "Product ID",
+						"type": "String"
+					},
+					{
+						"name": "Location ID",
+						"type": "String"
+					},
+					{
+						"name": "Sales Person ID",
+						"type": "String"
+					},
+					{
+						"name": "Customer ID",
+						"type": "String"
+					},
+					{
+						"name": "Purchase Date",
+						"type": "String"
+					},
+					{
+						"name": "Quantity",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CopyPipeline_l0f')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy_l0f",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "VerifierFicher",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "logic//sql data.xlsx"
+							},
+							{
+								"name": "Destination",
+								"value": "Table1"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "ExcelSource",
+								"additionalColumns": [
+									{
+										"name": "jjjj",
+										"value": "$$FILEPATH"
+									}
+								],
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"validateDataConsistency": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "Order ID",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Order ID",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Product ID",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Product ID",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Location ID",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Location ID",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Sales Person ID",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Sales Person ID",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Customer ID",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Customer ID",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Purchase Date",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Purchase Date",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "Quantity",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Quantity",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "jjjj",
+											"type": "String"
+										},
+										"sink": {
+											"name": "jjjj",
+											"type": "String"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "SourceDataset_l0f",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DelimitedText1",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "SendEmail",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Copy_l0f",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://prod-59.eastus.logic.azure.com:443/workflows/5b2c8b4116de4ee797e0a1cb8faf1fac/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RWZnjlbEAnahRF4FD53v6lDraJCuYbN_EtjP-OduPww",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"value": "{\n\"Title\":\"This is email form Afd\",\n\"Message\":\"Copy valider dand ADF\",\n\"DataFactoryName\":\"@{pipeline().DataFactory}\",\n\"DataPipName\":\"@{pipeline().Pipeline}\",\n\"DataTrigerTime\":\"@{pipeline().TriggerTime}\",\n\"Time\":\"@{utcnow()}\"\n}",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Erreur Copy Data",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Copy_l0f",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://prod-59.eastus.logic.azure.com:443/workflows/5b2c8b4116de4ee797e0a1cb8faf1fac/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RWZnjlbEAnahRF4FD53v6lDraJCuYbN_EtjP-OduPww",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"value": "{\n\"Title\":\"ErreurThis is email form Afd\",\n\"Message\":\"ErreurCopy valider dand ADF\",\n\"DataFactoryName\":\"@{pipeline().DataFactory}\",\n\"DataPipName\":\"@{pipeline().Pipeline}\",\n\"DataTrigerTime\":\"@{pipeline().TriggerTime}\",\n\"Time\":\"@{utcnow()}\"\n}",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "VerifierFicher",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "SourceDataset_l0f",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"columnCount"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"annotations": [],
+				"lastPublishTime": "2021-06-24T11:36:37Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SourceDataset_l0f')]",
+				"[concat(variables('factoryId'), '/datasets/DelimitedText1')]",
+				"[concat(variables('factoryId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		}
+	]
+}
